@@ -28,9 +28,48 @@
 		# FIM OPCAO
 	
 	SIFRA:
-		
+		# lê o fator da cifra
+		# como é uma função que não possui argumentos, não precisa ajustar a pilha
+
+		# imprime uma string
+		li $v0, 4
+		la $a0, fator
+		syscall
+	
+		# leitura do inteiro
+		li $v0, 5
+		syscall	
+	
+		jr $ra
 	DESCRIPTOGRAFAR:
-		
-	CRIPTOGRAFAR:
+		# descriptografa uma mensagem
 		jal SIFRA
+		
+		# valor fornecido está em $t0
+		move $t1, $v0
+		mul $t1, $t1, -1	# como a sifra será descriptografa, é necessário tornar a sifra negativa
+
+		# está aqui só para checagem
+		li $v0, 1
+		move $a0, $t1
+		syscall
+		
+		j FIM
+	CRIPTOGRAFAR:
+		# criptografa uma mensagem
+		jal SIFRA
+		
+		# valor fornecido está em $t0
+		move $t1, $v0
+
+		# está aqui só para checagem
+		li $v0, 1
+		move $a0, $t1
+		syscall
+		
+		j FIM
+	FIM:
+		li $v0, 10
+		syscall
+		
 	
