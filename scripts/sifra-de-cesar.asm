@@ -1,7 +1,11 @@
+# reorganizar
+# $tX para valores numericos em testes, etc, que serão alterados com frequencia
+# $Sx para as strings e valores que tendem a ser mais estáticos durante a execução
+
 .data
 	selecao: .asciiz "Digite 1 para criptograr e 2 para descriptografar: "
 	fator: .asciiz "Informe o fator da Sifra: "
-	mensagem: .asciiz "Informe a mensagem: "
+	mensagem: .asciiz "OBSERVAÇÃO: NÃO SERÃO CONSIDERADOS CARACTERES ESPECIAIS\nInforme a mensagem: "
 	pulaLinha: .asciiz "\n"	
 	
 	texto: .space 1000
@@ -57,7 +61,7 @@
 		# salva a inserção em texto
 		li $v0, 8
 		la $a0, texto
-		la $a1, 25
+		la $a1, 1000
 		syscall
 	
 		jr $ra
@@ -104,13 +108,51 @@
 		# testa se continua ou não no laço MANIPULANDO
 		beqz $t5, IMPRESSAO
 		
-		# adicionar testes de acordo com o codigo na tabela ASCII
+		# verifica se é numerico
+		addi $s0, $zero, 47
+		slti $t6, $t5, 58
+		slt $t7, $s0, $t5
+		beq $t6, $t7, ALTERANUMERICO
 		
-		# se continuar, altera o caractere de acordo com a chave e escreve-o
-		add $t5, $t5, $t1
-		sb $t5, 0($t4)
+		# verifica se é maiusculo
+		addi $s0, $zero, 64
+		slti $t6, $t5, 91
+		slt $t7, $s0, $t5
+		beq $t6, $t7, ALTERAMAIUSCULO
 		
-		# itera o controlador em 1 e volta ao inicio de MANIPULANDO
+		# verifica se é minusculo
+		addi $s0, $zero, 96
+		slti $t6, $t5, 123
+		slt $t7, $s0, $t5
+		beq $t6, $t7, ALTERAMINUSCULO
+		j INCREMENTA
+		
+	# se continuar, altera o caractere de acordo com a chave e escreve-o
+		add $t6, $t5, $t1
+
+		# testes para verificar se o resultado corresponde a um alfanumerico ASCII
+		# fator positivo
+		# quando atinge caractere + fator = valor da ultima letra deve fazer resultado - 26
+		# fator negativo
+		# quando atinge caractere + fator = valor da primeira letra deve fazer resultado + 26
+		# mesma logica aplicada para os numeros, mas com um conjunto de 10 valores
+		
+		# solução: separar em 3 ALTERA diferente para cada um dos casos e todos avançavarem para ESCREVER
+		# 1. realiza a operação fora dos blocos mesmo
+		# 2. se o resultado estiver fora da faixa:
+		# a. se for menor que o minimo, faz a soma do total de elementos do conjunto
+		# b. subtrai esse mesmo valor, caso contrário
+	ALTERAMAIUSCULO:
+		j ESCREVER
+	ALTERAMINUSCULO:
+		j ESCREVER
+	ALTERONUMERO:
+		j ESCREVER
+	ESCREVER:
+		sb $t6, 0($t4)
+		
+	# incrementa o controlador em 1 e volta ao inicio de MANIPULANDO
+	INCREMENTA:
 		add $t3, $t3, 1
 		j MANIPULANDO
 
