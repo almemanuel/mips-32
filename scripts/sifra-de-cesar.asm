@@ -1,20 +1,23 @@
 # reorganizar
 # $tX para valores numericos em testes, etc, que serão alterados com frequencia
 # $Sx para as strings e valores que tendem a ser mais estáticos durante a execução
+# rever também as passagens dos rotulos e os comentários, visando esclarecer
+# inserir ao inicio a função de cada registrador
 
 .data
 	selecao: .asciiz "Digite 1 para criptograr e 2 para descriptografar: "
-	fator: .asciiz "Informe o fator da Sifra: "
-	mensagem: .asciiz "OBSERVAÇÃO: NÃO SERÃO CONSIDERADOS CARACTERES ESPECIAIS\nInforme a mensagem: "
+	fator: .asciiz "\nInforme o fator da Cifra: "
+	mensagem: .asciiz "\nOBSERVAÇÃO: NÃO SERÃO CONSIDERADOS CARACTERES ESPECIAIS\nTAMANHO MAXIMO DA MENSAGEM: 1000 caracteres\nInforme a mensagem: "
 	pulaLinha: .asciiz "\n"	
 	
 	texto: .space 1000
+
+
 .text
 	OPCAO:
 		# enquanto $t0 for diferente de 1 ou 2, executar este bloco de código
 		# usuário seleciona a opção que deseja
-
-		# INICIO OPCAO
+		
 		# imprime uma string
 		li $v0, 4
 		la $a0, selecao
@@ -31,27 +34,23 @@
 		beq $t0, 1, CRIPTOGRAFAR
 		beq $t0, 2, DESCRIPTOGRAFAR
 		j OPCAO
-		
-		# FIM OPCAO
-	
-	SIFRA:
-		# lê o fator da cifra
-		# como é uma função que não possui argumentos, não precisa ajustar a pilha
 
-		# imprime uma string
+				
+	CIFRA:
+		# lê o fator da cifra
+		
 		li $v0, 4
 		la $a0, fator
 		syscall
 	
-		# leitura do inteiro
 		li $v0, 5
 		syscall	
 	
 		jr $ra
 
+
 	MENSAGEM:
 		# programa recebe a mensagem do usuário e salva na memória
-		# função sem argumentos, logo, sem ajuste de pilha
 		
 		# solicita ao usuário que informe a mensagem
 		li $v0, 4
@@ -66,95 +65,159 @@
 	
 		jr $ra
 
+
 	DESCRIPTOGRAFAR:
 		# descriptografa uma mensagem
-		jal SIFRA
+		jal CIFRA
 		
 		# valor fornecido está em $t0
-		move $t1, $v0
-		mul $t1, $t1, -1	# como a sifra será descriptografa, é necessário tornar a sifra negativa
+		move $s0, $v0
+		
+		# como a sifra será descriptografa, é necessário tornar a sifra negativa
+		mul $s0, $s0, -1
 
 		jal MENSAGEM
 
-		# salva o endereço de memoria do texto em $t2
-		la $t2, texto
-		
-		# inicializa o registrador para navegar byte a byte na string
-		add $t3, $zero, $zero
+		# salva o endereço de memoria do texto em $s1
+		la $s1, texto
 		
 		j MANIPULANDO
 
 	CRIPTOGRAFAR:
 		# criptografa uma mensagem
-		jal SIFRA
+		jal CIFRA
 		
-		# valor fornecido está em $t0
-		move $t1, $v0
+		# valor fornecido está em $s0
+		move $s0, $v0
 		
 		jal MENSAGEM
 		
-		# salva o endereço de memoria do texto em $t2
-		la $t2, texto
-		
-		# inicializa o registrador para navegar byte a byte na string
-		add $t3, $zero, $zero
+		# salva o endereço de memoria do texto em $s1
+		la $s1, texto
+
+				
 	MANIPULANDO:
+		# inicializa o registrador para navegar byte a byte na string
+		add $t0, $zero, $zero
+
+				
+	LACO:
 		# combinando os dois componentes do endereço
-		add $t4, $t3, $t2
+		add $t1, $t0, $s1
 	
 		# leitura byte a byte
-		lb $t5, 0($t4)
+		lb $t2, 0($t1)
 		
-		# testa se continua ou não no laço MANIPULANDO
-		beqz $t5, IMPRESSAO
+		# se apontar para o fim da string, ir para IMPRESSAO
+		beqz $t2, IMPRESSAO
 		
-		# verifica se é numerico
-		addi $s0, $zero, 47
-		slti $t6, $t5, 58
-		slt $t7, $s0, $t5
-		beq $t6, $t7, ALTERANUMERICO
+		# TESTES PARA VERIFICAR SE É UM CARCTERE VALIDO PARA CIFRAR
+		# $t7 = total de caracteres que são numéricos, maisculos ou minusculos
+		# $t8 = código ASCII do menor caractere correspondente a um numero, maiusculo ou minusculo
+		# $t9 = código ASCII do maior
 		
-		# verifica se é maiusculo
-		addi $s0, $zero, 64
-		slti $t6, $t5, 91
-		slt $t7, $s0, $t5
-		beq $t6, $t7, ALTERAMAIUSCULO
+		# verifica se $t2 é um numero
+		# valores de referência para códigos ASCII de numeros
+		addi $t7, $zero, 10
+		addi $t8, $zero, 48
+		addi $t9, $zero, 57
 		
-		# verifica se é minusculo
-		addi $s0, $zero, 96
-		slti $t6, $t5, 123
-		slt $t7, $s0, $t5
-		beq $t6, $t7, ALTERAMINUSCULO
+		# atribui os valores de referência aos registradores de argumento
+		add $a1, $zero, $t2
+		add $a2, $zero, $t8
+		add $a3, $zero, $t9
+		
+		# verifica se os valores são válidos para um código ASCII correspondente a este tipo de caractere
+		jal TESTE
+		# resultado de TESTE
+		move $t6, $v0
+		# caso tenha dado tudo certo, prossegue para a próxima etapa
+		beq $t6, $zero, ESCREVE
+		
+		# verifica se $t2 é maiusculo
+		# esse valor de $t7 será mantido no próximo teste, pois correspondente ao total de letras do alfabeto
+		addi $t7, $zero, 26
+		addi $t8, $zero, 65
+		addi $t9, $zero, 90
+
+		add $a1, $zero, $t2
+		add $a2, $zero, $t8
+		add $a3, $zero, $t9
+		jal TESTE
+		
+		move $t6, $v0
+		beq $t6, $zero, ESCREVE
+		
+		# verifica se $t2 é minusculo
+		addi $t8, $zero, 97
+		addi $t9, $zero, 122
+		
+		add $a1, $zero, $t2
+		add $a2, $zero, $t8
+		add $a3, $zero, $t9
+		jal TESTE
+		
+		move $t6, $v0
+		beq $t6, $zero, ESCREVE
+		
+		# caso o caractere não seja alfanumérico, ele avança para o fim do laço (etiqueta INCREMENTA)
 		j INCREMENTA
 		
-	# se continuar, altera o caractere de acordo com a chave e escreve-o
-		add $t6, $t5, $t1
+		
+		TESTE:
+			# verifica se $a2 <= $a1 <= $a3 para que esse caractere seja válido para manipulação
+			# $a1 -> código ASCII do caractere para verificar
+			# $a2 -> código ASCII minimo
+			# $a3 -> código ASCII maximo
+		
+			# para verificar o código trabalhando com o conjunto dos inteiros
+			# é necessário considerar o intervalo ($a2, $a3)
+			subi $a2, $a2, 1
+			addi $a3, $a3, 1
 
-		# testes para verificar se o resultado corresponde a um alfanumerico ASCII
-		# fator positivo
-		# quando atinge caractere + fator = valor da ultima letra deve fazer resultado - 26
-		# fator negativo
-		# quando atinge caractere + fator = valor da primeira letra deve fazer resultado + 26
-		# mesma logica aplicada para os numeros, mas com um conjunto de 10 valores
+			slt $t4, $a2, $a1 # $t4 = 0 -> $a2 < $a1
+			slt $t5, $a1, $a3 # $t5 = 0 -> $a3 > $a1
 		
-		# solução: separar em 3 ALTERA diferente para cada um dos casos e todos avançavarem para ESCREVER
-		# 1. realiza a operação fora dos blocos mesmo
-		# 2. se o resultado estiver fora da faixa:
-		# a. se for menor que o minimo, faz a soma do total de elementos do conjunto
-		# b. subtrai esse mesmo valor, caso contrário
-	ALTERAMAIUSCULO:
-		j ESCREVER
-	ALTERAMINUSCULO:
-		j ESCREVER
-	ALTERONUMERO:
-		j ESCREVER
-	ESCREVER:
-		sb $t6, 0($t4)
+			# ($a2 < $a1 < $a2) -> ($t4 = $t5 <=> 0 = $t4 - $t5)
+			sub $v0, $t4, $t5
 		
-	# incrementa o controlador em 1 e volta ao inicio de MANIPULANDO
-	INCREMENTA:
-		add $t3, $t3, 1
-		j MANIPULANDO
+			jr $ra
+		
+		ESCREVE:
+			# realiza as manipulações necessárias
+		
+			# encripta/decifra $t3	
+			add $t3, $t2, $s0
+		
+			add $a1, $t3, $zero
+			add $a2, $zero, $t8
+			add $a3, $zero, $t9		
+			jal TESTE
+		
+			move $t6, $v0
+		
+			beq $t6, $zero, CARACTERECOMFATOR
+		
+			# caso o caractere cifrado não seja alfanumérico, realiza um aumento ou uma redução
+			# no código ASCII
+			beq $t5, $zero, REDUZ		
+			AUMENTA:
+				# se o código ASCII for menor que o desejado, realiza um aumento
+				add $t3, $t3, $t7
+
+				j CARACTERECOMFATOR
+			REDUZ:
+				# se o código ASCII for maior que o desejado, realiza uma redução
+				sub $t3, $t3, $t7
+		CARACTERECOMFATOR:
+			sb $t3, 0($t1)
+		
+		INCREMENTA:
+			# incrementa o controlador em 1 e volta ao inicio de MANIPULANDO
+			add $t0, $t0, 1
+
+			j LACO
+
 
 	IMPRESSAO:
 		li $v0, 4
