@@ -5,7 +5,7 @@
 
 .data
 	selecao: .asciiz "Digite 1 para criptograr e 2 para descriptografar: "
-	fator: .asciiz "\nInforme o fator da Cifra: "
+	fator: .asciiz "\n\nInforme - somente números inteiros - o fator da Cifra: "
 	mensagem: .asciiz "\nOBSERVAÇÃO: NÃO SERÃO CONSIDERADOS CARACTERES ESPECIAIS\nTAMANHO MAXIMO DA MENSAGEM: 1000 caracteres\nInforme a mensagem: "
 	pulaLinha: .asciiz "\n"	
 	
