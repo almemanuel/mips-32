@@ -1,8 +1,7 @@
-# reorganizar
-# $tX para valores numericos em testes, etc, que serão alterados com frequencia
-# $Sx para as strings e valores que tendem a ser mais estáticos durante a execução
-# rever também as passagens dos rotulos e os comentários, visando esclarecer
-# inserir ao inicio a função de cada registrador
+# RM 11:36
+
+# Organização de Computadores - UTFPR - 2022/01
+# Desenvolvido por Emanuel de Almeida Souza
 
 .data
 	selecao: .asciiz "Digite 1 para criptograr e 2 para descriptografar: "
@@ -228,5 +227,6 @@
 	FIM:
 		li $v0, 10
 		syscall
-		
-	
+
+
+# RM 11:36	
