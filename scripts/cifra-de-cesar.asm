@@ -5,9 +5,10 @@
 
 .data
 	selecao: .asciiz "Digite 1 para criptograr e 2 para descriptografar: "
-	fator: .asciiz "\n\nInforme - somente números inteiros - o fator da Cifra: "
-	mensagem: .asciiz "\nOBSERVAÇÃO: NÃO SERÃO CONSIDERADOS CARACTERES ESPECIAIS\nTAMANHO MAXIMO DA MENSAGEM: 1000 caracteres\nInforme a mensagem: "
-	pulaLinha: .asciiz "\n"	
+	fator: .asciiz "\nInforme - somente números inteiros - o fator da Cifra: "
+	mensagem: .asciiz "\nOBSERVAÇÃO: NÃO SERÃO CONSIDERADOS CARACTERES ESPECIAIS\nTAMANHO MAXIMO DA MENSAGEM: 1000 caracteres\n\nInforme a mensagem: "
+	imprime: .asciiz "\nO texto abaixo é o resultado das manipulações executadas pelo programa:\n\t"	
+	fim: .asciiz "\nFIM.\n"
 	
 	texto: .space 1000
 
@@ -220,11 +221,19 @@
 
 	IMPRESSAO:
 		li $v0, 4
+		la $a0, imprime
+		syscall
+
+		li $v0, 4
 		la $a0, texto
 		syscall
-		
-		j FIM
+
+
 	FIM:
+		li $v0, 4
+		la $a0, fim
+		syscall
+	
 		li $v0, 10
 		syscall
 
